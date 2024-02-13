@@ -3,11 +3,6 @@
 
 @echo off
 
-rem Mandelbrot Set graphic in text mode
-rem Batch-JScript hybrid version optimized for high resolution screens
-rem Include "Terminal 1x1.FNT" font file and installation instructions
-rem Antonio Perez Ayala
-
 setlocal EnableDelayedExpansion
 if "%~1" equ "DrawLines" goto DrawLines
 
