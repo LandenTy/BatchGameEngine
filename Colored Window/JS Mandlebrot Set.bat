@@ -1,0 +1,252 @@
+@if (@CodeSection == @Batch) @then
+
+
+@echo off
+
+rem Mandelbrot Set graphic in text mode
+rem Batch-JScript hybrid version optimized for high resolution screens
+rem Include "Terminal 1x1.FNT" font file and installation instructions
+rem Antonio Perez Ayala
+
+setlocal EnableDelayedExpansion
+if "%~1" equ "DrawLines" goto DrawLines
+
+rem Create "Terminal 1x1.FNT" file if not exists
+if not exist "Terminal 1x1.FNT" (
+   call :ExtractBinaryFile "Terminal 1x1.FNT"
+   echo/
+   echo In order to install a "Terminal" raster font right-click on it and select
+   echo "Install", or open Fonts via Control Panel and drag^&drop the font file.
+   echo/
+   echo To use the installed font in a Command-line window, follow these steps:
+   echo/
+   echo 1. Right-click on any MS-DOS Command-line icon and select "Create shortcut"
+   echo    or "Copy".
+   echo 2. Open the folder that contain the programs that will be used in this window
+   echo    and type Ctrl-V (paste^); a new MS-DOS shortcut icon is created.
+   echo 3. Open the new icon, right-click on the title bar and select "Properties".
+   echo 4. Open "Font" tab, select "Bitmap fonts" and "1x1" size.
+   echo 5. Open "Layout" tab and enter a large size in Buffer and Window sizes; for
+   echo    example: Width: 800, Height: 600 (same values in BOTH Buffer and Window^).
+   echo 6. Click OK, type EXIT and press Enter.
+   echo/
+   echo After that, it is suggested to rename the new icon to include the resolution
+   echo and the font size; for example: "MS-DOS 800x600 @ 1x1". To use this icon:
+   echo open it, type the name of the program to execute and press Enter.
+   echo/
+   pause
+   goto :EOF
+)
+
+rem Working values: maximum screen coordinates
+rem The Command-line window MUST have the same values in BOTH Buffer and Window sizes
+set /A maxY=0, maxX=0
+for /F "skip=2 tokens=2" %%a in ('mode con') do (
+   if !maxY! equ 0 ( set /A maxY=%%a-2
+   ) else if !maxX! equ 0 ( set /A maxX=%%a-1
+   )
+)
+
+if not exist ColorChar.exe call :ExtractBinaryFile ColorChar.exe
+rem Create the semaphore-signal file and start the asynchronous process
+echo X > Flag.out
+if exist Flag.in del Flag.in
+rem Get output lines from JScript section and show they with ColorChar.exe
+cls
+CScript //nologo //E:JScript "%~F0" %maxY% %maxX% | "%~F0" DrawLines
+del Flag.out
+pause
+goto :EOF
+
+:DrawLines
+   rem Wait for "Data Available" signal
+   if not exist Flag.in goto DrawLines
+   rem Read the input line sent by JScript code
+   set line=
+   set /P "line="
+   rem Set "Data Read" acknowledgement
+   ren Flag.in Flag.out
+   rem Check the standard "End Of piped File" mark
+   if not defined line goto :EOF
+   ColorChar %line%
+goto DrawLines
+
+
+rem ExtractBinaryFile from hexadecimal digits placed in a "resource" in this .bat file
+:ExtractBinaryFile filename.ext
+setlocal EnableDelayedExpansion
+set "start="
+set "end="
+for /F "tokens=1,3 delims=:=>" %%a in ('findstr /N /B "</*resource" "%~F0"') do (
+   if not defined start (
+      if "%%~b" equ "%~1" set start=%%a
+   ) else if not defined end set end=%%a
+)
+(for /F "skip=%start% tokens=1* delims=:" %%a in ('findstr /N "^" "%~F0"') do (
+   if "%%a" == "%end%" goto decodeHexFile
+   echo %%b
+)) > "%~1.hex"
+:decodeHexFile
+< "%~1.hex" Cscript //nologo //E:JScript "%~F0" Extract "%~1"
+del "%~1.hex"
+exit /B
+
+
+<resource id="Terminal 1x1.FNT">
+00034403[2]416e746f6e696f20506572657a204179616c612028616b6120416163696e6929006163696e692900446c6c5c6e74646c6c2e646c6c[24]
+9001ff010001[2]01000100207f212061[5]3b03[6]da02[3]01[29]0100da02[2]0100db02[2]0100dc02[2]0100dd02[2]0100de02[2]0100df02
+[2]0100e002[2]0100e102[2]0100e202[2]0100e302[2]0100e402[2]0100e502[2]0100e602[2]0100e702[2]0100e802[2]0100e902[2]0100ea
+02[2]0100eb02[2]0100ec02[2]0100ed02[2]0100ee02[2]0100ef02[2]0100f002[2]0100f102[2]0100f202[2]0100f302[2]0100f402[2]0100
+f502[2]0100f602[2]0100f702[2]0100f802[2]0100f902[2]0100fa02[2]0100fb02[2]0100fc02[2]0100fd02[2]0100fe02[2]0100ff02[2]01
+[2]03[2]01000103[2]01000203[2]01000303[2]01000403[2]01000503[2]01000603[2]01000703[2]01000803[2]01000903[2]01000a03[2]01
+000b03[2]01000c03[2]01000d03[2]01000e03[2]01000f03[2]01001003[2]01001103[2]01001203[2]01001303[2]01001403[2]01001503[2]
+01001603[2]01001703[2]01001803[2]01001903[2]01001a03[2]01001b03[2]01001c03[2]01001d03[2]01001e03[2]01001f03[2]01002003[2]
+01002103[2]01002203[2]01002303[2]01002403[2]01002503[2]01002603[2]01002703[2]01002803[2]01002903[2]01002a03[2]01002b03[2]
+01002c03[2]01002d03[2]01002e03[2]01002f03[2]01003003[2]01003103[2]01003203[2]01003303[2]01003403[2]01003503[2]01003603[2]
+01003703[2]01003803[2]01003903[2]08003a03[3][6x80]0080[7]80[3]808080008080[3]8080[2]8000[6x80][2][9x80]00[5x80]008080[4]
+[11x80]00[15x80][3]80005465726d696e616c00
+</resource>
+
+<resource id="ColorChar.exe">
+4d5a900003[3]04[3]ffff[2]b8[7]40[35]b0[3]0e1fba0e00b409cd21b8014ccd21546869732070726f6772616d2063616e6e6f74206265207275
+6e20696e20444f53206d6f64652e0d0d0a24[7]55b5b8fd11d4d6ae11d4d6ae11d4d6ae9fcbc5ae18d4d6aeedf4c4ae13d4d6ae5269636811d4d6ae
+[8]5045[2]4c010300ff23cd52[8]e0000f010b01050c0004[3]04[7]10[3]10[3]20[4]40[2]10[3]02[2]04[7]04[8]40[3]04[6]03[5]10[2]10
+[4]10[2]10[6]10[11]1c20[2]28[84]20[2]1c[27]2e74657874[3]a202[3]10[3]04[3]04[14]20[2]602e7264617461[2]ea[4]20[3]02[3]08[14]
+40[2]402e64617461[3]20[4]30[3]02[3]0a[14]40[2]c0[480]e806[3]50e87302[2]558bec81c4f4dffffffc6af5e86e02[2]8945fc6800304000
+ff75fce85802[2]8dbdfcdfffff89bdf8dfffffe81302[2]e83202[2]8a064684c00f846001[2]3c2f75672bbdf8dfffff74168d85f4dfffff5057ff
+b5f8dfffffff75fce88b01[2]8bbdf8dfffff8a064684c00f842d01[2]2c303c0976082c073c0f76022c208a264684e40f841401[2]80fc20741286
+c42c303c0976082c073c0f76022c20d51066a316304000eb853c2275208a064684c00f84e6[3]3c227405880747ebec8a06463c2274f4e961ffffff
+3c300f82c9[3]3c390f87c1[3]e8e3[3]8ae080ff2a740a80ff58740580ff7875278adc468a06463c300f829d[3]3c390f8795[3]e8b7[3]0fb7c88a
+c3f3aae914ffffff80fc20737780fc09751f8b0d0430400003cf2b8df8dfffff83e10783e908f7d9b020f3aae9ebfeffff2bbdf8dfffff7418508d85
+f4dfffff5057ffb5f8dfffffff75fce889[3]588bbdf8dfffff88276a008d85f4dfffff506a01ffb5f8dfffffff75fce8fd[3]6800304000ff75fce8
+e4[3]e998feffff882747e990feffff2bbdf8dfffff74168d85f4dfffff5057ffb5f8dfffffff75fce82f[3]33c0c9c3e8[4]6683e00f66b90a008a
+3e4680ff30721480ff39770f66f7e180ef30660fb6d76603c2ebe44ec3558bec6a00ff7514ff7510ff750cff7508e880[3]8b4d10578b7d0c66a116
+304000f366ab8b0d04304000ff751451ff7510ff750cff7508e85e[3]5f6800304000ff7508e83e[3]c9c21000[6xcc]e847[3]8bf08a06463c2275
+098a06463c2275f9eb0c8a06463c20740484c075f54ec38a06463c2074f94ec3ccff2514204000ff2500204000ff2504204000ff2508204000ff250c
+204000ff25102040[351]6e20[2]8c20[2]9c20[2]ac20[2]ca20[2]6020[6]4420[10]dc20[3]20[22]6e20[2]8c20[2]9c20[2]ac20[2]ca20[2]
+6020[6]9b004578697450726f6365737300f500476574436f6e736f6c6553637265656e427566666572496e666f[2]6a0147657453746448616e646c
+65[2]ee025772697465436f6e736f6c654100f2025772697465436f6e736f6c654f757470757441747472696275746500e600476574436f6d6d616e
+644c696e6541006b65726e656c33322e646c6c[302]07[489]
+</resource>
+
+
+@end
+
+
+if ( WScript.Arguments(0) != "Extract" ) {
+fso = new ActiveXObject("Scripting.FileSystemObject");
+SCREEN_HEIGHT = 32;
+
+var           yTop=1.1250,
+    xLeft=-1.0000, xRight=2.0000,
+           yBottom=-1.1250,       maxLevel=32,  // larger maxLevel values produce finer image details
+    maxY=parseInt(WScript.Arguments(0)), maxX=parseInt(WScript.Arguments(1)),
+    xStep=(xRight-xLeft)/maxX, yStep=(yBottom-yTop)/maxY, yPos=yTop-yStep,
+    color="C";
+
+// Actually Drawing
+for ( var y = 0; y <= SCREEN_HEIGHT; y++ ) {
+   yPos += yStep;
+   var xPos = xLeft - xStep,
+      line = "",
+      prevPixel = "",
+      count = 0,
+      pixel = color; // Set the same color for the entire Mandelbrot set
+
+   for (var x = 0; x <= maxX; x++) {
+      xPos += xStep;
+      var xIter = xPos,
+         yIter = yPos,
+         xSquare = xIter * xIter,
+         ySquare = yIter * yIter,
+         root = xSquare + ySquare,
+         level = 0;
+
+      for (var i = 1; i <= maxLevel; i++) {
+         if (root < 4) {
+               yIter = 2 * xIter * yIter - yPos;
+               xIter = xSquare - ySquare - xPos;
+               xSquare = xIter * xIter;
+               ySquare = yIter * yIter;
+               root = xSquare + ySquare;
+         } else {
+               level = i;
+               break;
+         }
+      }
+
+      // Assign the same color for the entire Mandelbrot set
+      pixel = color;
+
+      if (pixel != prevPixel) {
+         line += " /" + prevPixel + " 219*" + count;
+         if (line.length > 1000) {
+               sendLine(line);
+               line = "";
+         }
+         prevPixel = pixel;
+         count = 1;
+      } else {
+         count++;
+      }
+   }
+   line += " /" + prevPixel + " 219*" + count;
+   sendLine(line);
+}
+
+// Wait for last "Data Read" acknowledgement
+while ( ! fso.FileExists("Flag.out") ) {
+      WScript.Sleep(1);
+}
+// Send the standard "End Of piped File" mark
+WScript.Echo();
+fso.MoveFile("Flag.out", "Flag.in");
+
+} else {
+
+// Extract a hexadecimal "resource" into a binary file
+
+// Convert Ascii hexadecimal digits from Stdin to a binary string
+var count, byte, output = "";
+while ( !WScript.Stdin.AtEndOfStream ) {
+   var input = WScript.Stdin.ReadLine();
+   for ( var index = 0; index < input.length; ) {
+      if ( input.charAt(index) == '[' ) {
+         for ( count = ++index; input.charAt(index) != 'x' &&
+                                input.charAt(index) != ']' ; index++ ) ;
+         count = parseInt(input.slice(count,index++));
+         if ( input.charAt(index-1) == 'x' ) {
+            byte = String.fromCharCode(parseInt(input.substr(index,2),16));
+            index += 3;
+         } else {
+            byte = String.fromCharCode(0);
+         }
+         for ( var i = 1; i <= count; i++ ) output += byte;
+      } else {
+         output += String.fromCharCode(parseInt(input.substr(index,2),16));
+         index += 2;
+      }
+   }
+}
+
+// Write the binary string to the output file
+var ado = WScript.CreateObject("ADODB.Stream");
+ado.Type = 2;  // adTypeText = 2
+ado.CharSet = "iso-8859-1";  // right code page for output (no adjustments)
+ado.Open();
+ado.WriteText(output);
+ado.SaveToFile(WScript.Arguments(1),2); // adSaveCreateOverWrite = 2
+ado.Close();
+
+}
+
+function sendLine ( line ) {
+   // Wait for "Data Read" acknowledgement
+   while ( ! fso.FileExists("Flag.out") ) {
+      WScript.Sleep(1);
+   }
+   // Send the line to Batch code
+   WScript.Echo(line);
+   // Set "Data Available" signal
+   fso.MoveFile("Flag.out", "Flag.in");
+}
